@@ -1,43 +1,18 @@
 'use strict';
 
 angular.module('dockerUiApp').controller('ImagesCtrl', [
-    '$scope', '$location', 'Docker', function ($scope, $location, Docker) {
+    '$scope', '$location', '$filter', 'Docker',
+    function ($scope, $location, $filter, Docker) {
         $scope.images = [];
-        $scope.options = {all: true, tree: true};
-
-        function createTree(images, container) {
-            var ids = {},
-                parents = container || [],
-                pids = {};
-            images.forEach(function (image) {
-                ids[image.Id] = image;
-                pids[image.Id] = pids[image.Id] || [];
-                image.children = pids[image.Id];
-                /** @namespace image.ParentId */
-                if (!image.ParentId) {
-                    parents.push(image);
-                } else {
-                    if (pids[image.ParentId]) {
-                        pids[image.ParentId].push(image);
-                    } else {
-                        pids[image.ParentId] = [image];
-                    }
-
-                }
-                
-            });
-            
-            return parents;
-        }
+        $scope.showUntagged = false;
+        $scope.options = {all: false, tree: false};
 
         $scope.reload = function () {
             Docker.images($scope.options, function (images) {
-                $scope.images.splice(0);
-                if ($scope.options.tree) {
-                    $scope.images = createTree(images);
-                } else {
-                    $scope.images = images;
-                }
+                $scope.images = $filter('filter')(images, function (image) {
+                    var tags = image.RepoTags || [];
+                    return $scope.showUntagged || tags[0] !== '<none>:<none>';
+                });
             });
         };
 
@@ -47,7 +22,7 @@ angular.module('dockerUiApp').controller('ImagesCtrl', [
                     name : 'Id',
                     field: 'Id',
                     map  : function (e) {
-                        return e.slice(0, 12)
+                        return e.slice(0, 12);
                     },
                     link : '/image/{{ Id | shortTag }}'
                 },
@@ -56,19 +31,31 @@ angular.module('dockerUiApp').controller('ImagesCtrl', [
                     field: 'RepoTags',
                     link : '/image/{{ Id | shortTag }}',
                     map  : function (e) {
-                        return e[0].split(':')[0]
+                        var unique = {};
+                        return e
+                            .map(function (tag) {
+                                var parsed = Docker.parseTag(tag);
+                                return parsed.nameWithRegistry;
+                            }).filter(function (e) {
+                                var isUnique = !unique[e];
+                                unique[e] = true;
+                                return isUnique && !!e;
+                            }).join(', ');
                     }
                 },
                 {
                     name : 'Tags',
                     field: 'RepoTags',
                     map  : function (e) {
+                        var unique = {};
                         return e
                             .map(function (e) {
-                                return e.split(':')[1]
+                                return Docker.parseTag(e).tag;
                             })
                             .filter(function (e) {
-                                return !!e;
+                                var isUnique = !unique[e];
+                                unique[e] = true;
+                                return isUnique && !!e;
                             })
                             .join(', ');
                     }
@@ -95,16 +82,14 @@ angular.module('dockerUiApp').controller('ImagesCtrl', [
             nested: true,
             globalFilter: true
         };
-        
-        $scope.destroyImage = function () {
-            if ($scope.imageId)
-            Docker.deleteImage({ID: $scope.imageId}, function (){
-                
-            });
-        };
-        
+
         $scope.searchImages = function () {
             $location.path('/images/search');
         };
+
+        $scope.buildImage = function () {
+            $location.path('/images/build');
+        };
+
         $scope.reload();
     }]);

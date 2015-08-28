@@ -1,6 +1,14 @@
+@media screen and (min-width: 768px) {
+/*
+    .modal-dialog {
+        left: inherit !important;
+    }
+*/
+}
+
 /* Space out content a bit */
 body {
-  padding-top: 0px;
+  padding-top: 0;
   padding-bottom: 20px;
 }
 
@@ -90,7 +98,7 @@ ul.pager li, ul.nav.nav-tabs li{
     width: 250px;
 }
 
-.decipher-tags {
+.tags {
     min-height: 34px;
     padding: 0 12px;
     margin: 0;
@@ -98,8 +106,7 @@ ul.pager li, ul.nav.nav-tabs li{
     line-height: 1.428571429;
     color: #555555;
     vertical-align: middle;
-    background-color: #ffffff;
-    background-image: none;
+    background: #fff none;
     border: 1px solid #cccccc;
     border-radius: 4px;
     -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
@@ -108,12 +115,14 @@ ul.pager li, ul.nav.nav-tabs li{
     transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
 }
 
-.decipher-tags-input {
-    padding: 6px 0;
+.search-input, .selectize-control {
+    width: 100% !important;
 }
 
-@media screen and (min-width: 768px) {
-    .modal-dialog {
-        left: inherit !important;
-    }
+.popover-content {
+    word-wrap: break-word;
+}
+.tags-input .host {
+     margin-top: 0;
+     margin-bottom: 0;
 }

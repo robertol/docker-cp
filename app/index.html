@@ -9,14 +9,15 @@
     <title></title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
-      <link rel="shortcut icon" href="http://docs.docker.io/en/latest/_static/favicon.png"/>
+      <link rel="shortcut icon" href="https://d3oypxn00j2a10.cloudfront.net/0.8.0/favicon_whale.png"/>
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
     <!-- build:css styles/vendor.css -->
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
-    <link rel="stylesheet" href="bower_components/angular-spinner-loading/src/loading-bar.css" />
-    <link rel="stylesheet" href="bower_components/bootstrap-css/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="bower_components/angular-tags/dist/angular-tags-0.2.10.css" />
+    <link rel="stylesheet" href="bower_components/angular-loading-bar/build/loading-bar.css" />
+      <link rel="stylesheet" href="bower_components/angular-ui-select/dist/select.css" />
+      <link rel="stylesheet" href="bower_components/ng-json-explorer/src/angular-json-explorer.css" />
+      <link rel="stylesheet" href="bower_components/angular-google-chart/style.css" />
     <!-- endbower -->
     <!-- endbuild -->
     <!-- build:css({.tmp,app}) styles/main.css -->
@@ -50,21 +51,19 @@
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->
     <script src="bower_components/term.js/src/term.js"></script>
-    <script src="bower_components/jquery/jquery.js"></script>
     <script src="bower_components/angular/angular.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular-resource/angular-resource.js"></script>
     <script src="bower_components/angular-cookies/angular-cookies.js"></script>
     <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
     <script src="bower_components/angular-route/angular-route.js"></script>
     <script src="bower_components/angular-ui-bower/build/angular-ui.js"></script>
     <script src="bower_components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.js"></script>
-    <script src="bower_components/angular-route-segment/build/angular-route-segment.min.js"></script>
-    <script src="bower_components/angular-spinner-loading/src/loading-bar.js"></script>
-    <script src="bower_components/bootstrap-css/js/bootstrap.min.js"></script>
-    <script src="bower_components/angular-tags/dist/angular-tags-0.2.10-tpls.min.js"></script>
+    <script src="bower_components/angular-route-segment/build/angular-route-segment.js"></script>
+    <script src="bower_components/angular-loading-bar/build/loading-bar.js"></script>
     <script src="bower_components/angular-base64/angular-base64.js"></script>
-    <script src="bower_components/angular-base64/angular-base64.min.js"></script>
+    <script src="bower_components/ng-json-explorer/src/angular-json-explorer.js"></script>
+    <script src="bower_components/angular-ui-select/dist/select.js"></script>
+    <script src="bower_components/angular-google-chart/ng-google-chart.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 
@@ -74,6 +73,8 @@
         <script src="scripts/controllers/containers.js"></script>
         <script src="scripts/controllers/images.js"></script>
         <script src="scripts/controllers/events.js"></script>
+        <script src="scripts/controllers/hosts.js"></script>
+        <script src="scripts/services/http.js"></script>
         <script src="scripts/services/docker.js"></script>
         <script src="scripts/services/config.js"></script>
         <script src="scripts/directives/dc-grid.js"></script>
@@ -84,6 +85,14 @@
         <script src="scripts/services/stream.js"></script>
         <script src="scripts/controllers/info.js"></script>
         <script src="scripts/filters/short-tag.js"></script>
+        <script src="scripts/services/terminal.js"></script>
+        <script src="scripts/controllers/create-container.js"></script>
+        <script src="scripts/controllers/destroy.js"></script>
+        <script src="scripts/controllers/commit.js"></script>
+        <script src="scripts/controllers/auth.js"></script>
+        <script src="scripts/services/dialogs.js"></script>
+        <script src="scripts/controllers/push-image.js"></script>
+        <script src="scripts/services/urlparser.js"></script>
         <!-- endbuild -->
 </body>
 </html>

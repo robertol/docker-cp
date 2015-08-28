@@ -4,48 +4,15 @@ angular.module('dockerUiApp').directive('ngAppendHtml', [
         return function (scope, element, attr) {
             /** @namespace attr.ngAppendHtml */
             element.append($compile(angular.element(scope.$eval(attr.ngAppendHtml)))(scope));
-        }
+        };
     }
 ]);
 angular.module('dockerUiApp').directive('dcGrid', [
-    '$compile', '$parse', '$rootScope', '$filter', function ($compile, $parse, $rootScope, $filter) {
+    '$compile', '$parse', '$rootScope', '$filter', '$injector', '$q',
+    function ($compile, $parse, $rootScope, $filter, $injector, $q) {
+
         return {
-            template: '<div>\
-                <div class="row">\
-                    <div class="col-sm-2">\
-                        <pager total-items="totalItems" items-per-page="maxSize" page="currentPage" num-pages="numPages"></pager>\
-                    </div>\
-                    <div class="pager col-sm-1 center-block" style="padding-top: 6px;">\
-                        Page: {{ currentPage }} / {{ numPages }}\
-                    </div>\
-                </div>\
-                <table class="table table-hover">\
-                    <thead>\
-                        <tr>\
-                            <th data-ng-repeat="def in options.colDef" data-ng-click="sort(def.field)" style="cursor: pointer;">\
-                                <i data-ng-class=\'{"glyphicon-chevron-up": sortUp(def.field), "glyphicon-chevron-down": sortDown(def.field)}\' class="glyphicon"></i>{{ def.name }}\
-                            </th>\
-                        </tr>\
-                    </thead>\
-                    <tbody>\
-                        <tr data-ng-repeat-start="row in rows" \
-                            data-ng-class="rowClass(row)" \
-                            data-ng-click="subgrid(row)" \
-                            style="min-width: 50px;">\
-                            <td data-ng-repeat="def in options.colDef" \
-                                data-ng-append-html="get(row, def)" \
-                                data-ng-compile="def.compile" \
-                                style="{{def.style}}" \
-                                data-ng-class="def.class"></td>\
-                        </tr>\
-                        <tr data-ng-repeat-end data-ng-show="nested && row.Id === active" data-name="parent-{{ row.Id }}">\
-                            <td colspan="{{ options.colDef.length }}">\
-                                <span style="padding-left: 40px"></span>\
-                            </td>\
-                        </tr>\
-                    </tbody>\
-                </table>\
-            </div>',
+            templateUrl: 'views/dc-grid.html',
             restrict: 'E',
             replace: true,
             scope   : {
@@ -57,23 +24,35 @@ angular.module('dockerUiApp').directive('dcGrid', [
                 scope.maxSize = scope.options.maxSize || 10;
                 scope.nested = !!scope.options.nested;
                 scope.active = null;
+                scope.rows = [];
+
                 var filtered = [],
                     progress = false;
+
+                function resetSelection() {
+                    scope.selection = {
+                        selectAll: false,
+                        selected: {}
+                    };
+                }
                 function init(rows) {
+                    resetSelection();
+
                     if (!rows.length) {
+                        scope.rows = [];
                         return;
                     }
                     scope.totalItems = rows.length;
-                    if (scope.sortBy && scope.sortType) {
-                        rows = $filter('orderBy')(rows, scope.sortBy, scope.sortType);
+                    if (scope.sortBy && angular.isDefined(scope.sortOrder)) {
+                        rows = $filter('orderBy')(rows, scope.sortBy, scope.sortOrder);
                     }
-                    scope.rows = rows.slice((scope.currentPage-1) * scope.maxSize, scope.currentPage * scope.maxSize);
+                    scope.rows = rows.slice((scope.currentPage - 1) * scope.maxSize, scope.currentPage * scope.maxSize);
                     progress = false;
                 }
                 scope.$watchCollection('items', function (rows) {
                     progress = true;
                     scope.currentPage = 1;
-                    filtered = rows;
+                    filtered = rows || [];
                     init(filtered);
                 });
                 scope.$watch('currentPage', function () {
@@ -83,28 +62,58 @@ angular.module('dockerUiApp').directive('dcGrid', [
                     init(filtered);
                 });
                 scope.sortBy = scope.options.sortBy;
-                scope.sortType = !!scope.options.sortBy;
+                scope.sortOrder = !!scope.options.sortBy;
                 scope.sort = function (field) {
                     if (scope.sortBy !== field) {
                         scope.sortBy = field;
-                        scope.sortType = true;
+                        scope.sortOrder = true;
                     } else {
-                        if (scope.sortType) {
-                            scope.sortType = false;
+                        if (scope.sortOrder) {
+                            scope.sortOrder = false;
                         } else {
-                            scope.sortType = null;
+                            scope.sortOrder = null;
                             scope.sortBy = null;
                         }
                     }
                     init(filtered);
                 };
+
                 scope.sortUp = function (field) {
-                    return scope.sortBy === field && scope.sortType === true;
+                    return scope.sortBy === field && scope.sortOrder === true;
                 };
+
                 scope.sortDown = function (field) {
-                    return scope.sortBy === field && scope.sortType === false;
+                    return scope.sortBy === field && scope.sortOrder === false;
                 };
-                
+                function updateSelectAllState() {
+                    scope.selection.selectAll = Object.keys(scope.selection.selected).length === scope.rows.length;
+                }
+                scope.invertSelection = function invertSelection(index) {
+                    if (!scope.selection.selected[index]) {
+                        scope.selection.selected[index] = true;
+                    } else {
+                        delete scope.selection.selected[index];
+                    }
+                    updateSelectAllState();
+                };
+                scope.invertSelectAll = function invertSelectionAll() {
+                    scope.rows.forEach(function (row, index) {
+                        if (scope.selection.selectAll && scope.selection.selected[index]) {
+                            delete scope.selection.selected[index];
+                        } else if (!scope.selection.selectAll) {
+                            scope.selection.selected[index] = true;
+                        }
+                    });
+                    scope.selection.selectAll = !scope.selection.selectAll;
+                };
+                scope.selectionLength = function selectionLength() {
+                    return Object.keys(scope.selection.selected).length;
+                };
+                scope.getSelection = function getSelection() {
+                    return Object.keys(scope.selection.selected).map(function (index) {
+                        return scope.rows[index];
+                    });
+                };
                 if (scope.options.globalFilter) {
                     $rootScope.$watch('search.value', function (value) {
                         if (progress) {
@@ -114,33 +123,43 @@ angular.module('dockerUiApp').directive('dcGrid', [
                         init(filtered);
                     });
                 }
-                
+
                 scope.rowClass = function (data) {
                     if (scope.options.rowClass) {
                         return scope.options.rowClass(data);
                     }
                     return '';
                 };
-                
-                scope.subgrid = function (row) {
-                    if (!scope.nested) {
-                        return;
-                    }
-                    /** @namespace row.Id */
-                    if (!(row.children && row.children.length) || scope.active === row.Id) {
-                        scope.active = null;
-                        return;
-                    }
-
-                    scope.active = row.Id;
-                    var newScope = scope.$new();
-                    newScope.options = scope.options;
-                    newScope.items = row.children;
-                    angular.element('[data-name=parent-' + row.Id + '] span')
-                        .html("")
-                        .append($compile('<dc-grid data-options="options" data-items="items"></dc-grid>')(newScope));
+                scope.showActionsMenu = (scope.options.actionButtons || []).some(function (button) {
+                    return button.dropdown === true;
+                });
+                scope.actionActive = function actionActive(button) {
+                    return button.onSelection && !!scope.selectionLength() ||
+                        !button.onSelection && (!button.cardinality || button.cardinality === scope.selectionLength());
                 };
-                
+                scope.fireAction = function fireAction(button) {
+                    if (!scope.actionActive(button)) {
+                        return;
+                    }
+                    var locals = {
+                        $scope: scope,
+                        selection: scope.getSelection()
+                    };
+                    var result = $injector.invoke(button.click, {}, locals);
+                    if (result) {
+                        $q.when(result).then($rootScope.$reload);
+                    }
+                };
+                scope.isItemVisible = function isItemVisible(button) {
+                    if (!button.visible) {
+                        return true;
+                    }
+                    var locals = {
+                        $scope: scope,
+                        selection: scope.getSelection()
+                    };
+                    return $injector.invoke(button.visible, {}, locals);
+                };
                 scope.get = function (data, def) {
                     var getter = $parse(def.field),
                         value = getter(scope, data),
@@ -153,18 +172,19 @@ angular.module('dockerUiApp').directive('dcGrid', [
                     if (Array.isArray(def.buttons)) {
                         el = '';
                         def.buttons.forEach(function (button, i) {
-                            el += '<button class="btn ' + button.class + '" data-ng-click="def.buttons[' + i + '].click(row)">' + button.name + '</button>';
+                            el += '<button class="btn ' + button.class +
+                            '" data-ng-click="def.buttons[' + i + '].click(row)">' + button.name + '</button>';
                         });
                         return el;
                     }
-                    
+
                     if (typeof def.map === 'function') {
                         value = def.map(value, data);
                     } else if (typeof def.map === 'string') {
                         el = angular.element('<div>' + def.map + '</div>');
                         value = $compile(el)(data).html();
                     }
-                    
+
                     if (def.filter) {
                         if (typeof def.filter === 'string') {
                             value = $filter(def.filter)(value);
@@ -172,18 +192,21 @@ angular.module('dockerUiApp').directive('dcGrid', [
                             value = $filter(def.filter.name)(value, def.filter.options);
                         }
                     }
+
                     if (def.link) {
                         el = angular.element('<div><a href="#!' + def.link + '">' + value + '</a></div>');
                         el = $compile(el)(data).html();
                     } else {
                         el = value;
                     }
-                    
+
                     if (el === undefined) {
                         el = '';
                     }
+
                     return '<span>' + el + '</span>';
                 };
             }
         };
-    }]);
+    }
+]);

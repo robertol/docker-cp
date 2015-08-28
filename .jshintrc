@@ -2,8 +2,7 @@
   "node": true,
   "browser": true,
   "esnext": true,
-  "bitwise": true,
-  "camelcase": true,
+  "bitwise": false,
   "curly": true,
   "eqeqeq": true,
   "immed": true,
@@ -19,6 +18,7 @@
   "trailing": true,
   "smarttabs": true,
   "globals": {
-    "angular": false
+    "angular": false,
+    "Terminal": false
   }
 }
